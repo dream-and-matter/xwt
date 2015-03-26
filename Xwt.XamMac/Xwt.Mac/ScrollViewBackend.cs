@@ -34,6 +34,7 @@ using CGPoint = System.Drawing.PointF;
 using CGSize = System.Drawing.SizeF;
 using MonoMac.AppKit;
 using MonoMac.CoreGraphics;
+
 #else
 using AppKit;
 using CoreGraphics;
@@ -55,16 +56,16 @@ namespace Xwt.Mac
 			Widget.HasVerticalScroller = true;
 			Widget.AutoresizesSubviews = true;
 		}
-		
+
 		protected override Size GetNaturalSize ()
 		{
 			return EventSink.GetDefaultNaturalSize ();
 		}
-		
+
 		public void SetChild (IWidgetBackend child)
 		{
 			this.child = child;
-			ViewBackend backend = (ViewBackend) child;
+			ViewBackend backend = (ViewBackend)child;
 			if (backend.EventSink.SupportsCustomScrolling ()) {
 				var vs = new ScrollAdjustmentBackend (Widget, true);
 				var hs = new ScrollAdjustmentBackend (Widget, false);
@@ -77,8 +78,7 @@ namespace Xwt.Mac
 				backend.EventSink.SetScrollAdjustments (hs, vs);
 				vertScroll = vs;
 				horScroll = hs;
-			}
-			else {
+			} else {
 				clipView = new NormalClipView ();
 				clipView.Scrolled += OnScrolled;
 				Widget.ContentView = clipView;
@@ -86,7 +86,7 @@ namespace Xwt.Mac
 				UpdateChildSize ();
 			}
 		}
-		
+
 		public ScrollPolicy VerticalScrollPolicy {
 			get {
 				return verticalScrollPolicy;
@@ -108,6 +108,7 @@ namespace Xwt.Mac
 		}
 
 		IScrollControlBackend vertScroll;
+
 		public IScrollControlBackend CreateVerticalScrollControl ()
 		{
 			if (vertScroll == null)
@@ -116,6 +117,7 @@ namespace Xwt.Mac
 		}
 
 		IScrollControlBackend horScroll;
+
 		public IScrollControlBackend CreateHorizontalScrollControl ()
 		{
 			if (horScroll == null)
@@ -136,7 +138,7 @@ namespace Xwt.Mac
 				return Rectangle.Zero;
 			}
 		}
-		
+
 		public bool BorderVisible {
 			get {
 				return false;
@@ -157,11 +159,9 @@ namespace Xwt.Mac
 				Size s;
 				if (horizontalScrollPolicy == ScrollPolicy.Never) {
 					s = c.Frontend.Surface.GetPreferredSize (SizeConstraint.WithSize (Widget.ContentView.Frame.Width), SizeConstraint.Unconstrained);
-				}
-				else if (verticalScrollPolicy == ScrollPolicy.Never) {
-					s = c.Frontend.Surface.GetPreferredSize (SizeConstraint.Unconstrained, SizeConstraint.WithSize (Widget.ContentView.Frame.Width));
-				}
-				else {
+				} else if (verticalScrollPolicy == ScrollPolicy.Never) {
+					s = c.Frontend.Surface.GetPreferredSize (SizeConstraint.Unconstrained, SizeConstraint.WithSize (Widget.ContentView.Frame.Height));
+				} else {
 					s = c.Frontend.Surface.GetPreferredSize ();
 				}
 				var w = Math.Max (s.Width, Widget.ContentView.Frame.Width);
@@ -169,13 +169,13 @@ namespace Xwt.Mac
 				view.Frame = new CGRect (view.Frame.X, view.Frame.Y, (nfloat)w, (nfloat)h);
 			}
 		}
-		
+
 		public void SetChildSize (Size s)
 		{
 			UpdateChildSize ();
 		}
 	}
-	
+
 	class CustomScrollView: NSScrollView, IViewObject
 	{
 		public NSView View {
@@ -185,7 +185,7 @@ namespace Xwt.Mac
 		}
 
 		public ViewBackend Backend { get; set; }
-		
+
 		public override bool IsFlipped {
 			get {
 				return true;
@@ -201,7 +201,7 @@ namespace Xwt.Mac
 			}
 		}
 	}
-	
+
 	class CustomClipView: NSClipView
 	{
 		ScrollAdjustmentBackend hScroll;
@@ -247,7 +247,7 @@ namespace Xwt.Mac
 			var v = DocumentView.Subviews [0];
 			v.Frame = new CGRect (v.Frame.X, v.Frame.Y, newSize.Width, newSize.Height);
 		}
-		
+
 		public override void ScrollToPoint (CGPoint newOrigin)
 		{
 			base.ScrollToPoint (newOrigin);
