@@ -44,6 +44,7 @@ using MonoMac.AppKit;
 using MonoMac.ObjCRuntime;
 using MonoMac.CoreGraphics;
 using MonoMac.CoreAnimation;
+
 #else
 using Foundation;
 using AppKit;
@@ -58,11 +59,11 @@ namespace Xwt.Mac
 	public abstract class ViewBackend<T,S>: ViewBackend where T:NSView where S:IWidgetEventSink
 	{
 		public new S EventSink {
-			get { return (S) base.EventSink; }
+			get { return (S)base.EventSink; }
 		}
-		
+
 		public new T Widget {
-			get { return (T) base.Widget; }
+			get { return (T)base.Widget; }
 		}
 	}
 
@@ -82,12 +83,12 @@ namespace Xwt.Mac
 		void IBackend.InitializeBackend (object frontend, ApplicationContext context)
 		{
 			ApplicationContext = context;
-			this.frontend = (Widget) frontend;
+			this.frontend = (Widget)frontend;
 		}
-		
+
 		void IWidgetBackend.Initialize (IWidgetEventSink sink)
 		{
-			eventSink = (IWidgetEventSink) sink;
+			eventSink = (IWidgetEventSink)sink;
 			Initialize ();
 			ResetFittingSize ();
 			canGetFocus = Widget.AcceptsFirstResponder ();
@@ -108,32 +109,32 @@ namespace Xwt.Mac
 		public virtual void Initialize ()
 		{
 		}
-		
+
 		public IWidgetEventSink EventSink {
 			get { return eventSink; }
 		}
-		
+
 		public Widget Frontend {
 			get {
 				return this.frontend;
 			}
 		}
-		
+
 		public ApplicationContext ApplicationContext {
 			get;
 			private set;
 		}
-		
+
 		public object NativeWidget {
 			get {
 				return Widget;
 			}
 		}
-		
+
 		public NSView Widget {
-			get { return (NSView) ViewObject.View; }
+			get { return (NSView)ViewObject.View; }
 		}
-		
+
 		public IViewObject ViewObject {
 			get { return viewObject; }
 			set {
@@ -142,7 +143,7 @@ namespace Xwt.Mac
 					viewObject.Backend = this;
 			}
 		}
-		
+
 		public bool Visible {
 			get { return !Widget.Hidden; }
 			set { Widget.Hidden = !value; }
@@ -152,7 +153,7 @@ namespace Xwt.Mac
 			get { return Widget.AlphaValue; }
 			set { Widget.AlphaValue = (float)value; }
 		}
-		
+
 		public virtual bool Sensitive {
 			get { return sensitive; }
 			set {
@@ -194,19 +195,19 @@ namespace Xwt.Mac
 					canGetFocus = false;
 			}
 		}
-		
+
 		public virtual bool HasFocus {
 			get {
 				return Widget.Window != null && Widget.Window.FirstResponder == Widget;
 			}
 		}
-		
+
 		public virtual void SetFocus ()
 		{
 			if (Widget.Window != null && CanGetFocus)
 				Widget.Window.MakeFirstResponder (Widget);
 		}
-		
+
 		public string TooltipText {
 			get {
 				return Widget.ToolTip;
@@ -215,7 +216,7 @@ namespace Xwt.Mac
 				Widget.ToolTip = value;
 			}
 		}
-		
+
 		public void NotifyPreferredSizeChanged ()
 		{
 			EventSink.OnPreferredSizeChanged ();
@@ -253,26 +254,26 @@ namespace Xwt.Mac
 			else
 				Cursor = NSCursor.ArrowCursor;
 		}
-		
+
 		~ViewBackend ()
 		{
 			Dispose (false);
 		}
-		
+
 		public void Dispose ()
 		{
 			GC.SuppressFinalize (this);
 			Dispose (true);
 		}
-		
+
 		protected virtual void Dispose (bool disposing)
 		{
 		}
-		
+
 		Size IWidgetBackend.Size {
 			get { return new Size (Widget.WidgetWidth (), Widget.WidgetHeight ()); }
 		}
-		
+
 		public static NSView GetWidget (IWidgetBackend w)
 		{
 			return ((ViewBackend)w).Widget;
@@ -335,7 +336,7 @@ namespace Xwt.Mac
 				wp.Subviews [0].RemoveFromSuperview ();
 			}
 		}
-		
+
 		static bool NeedsAlignmentWrapper (Widget fw)
 		{
 			return fw.HorizontalPlacement != WidgetPlacement.Fill || fw.VerticalPlacement != WidgetPlacement.Fill || fw.Margin.VerticalSpacing != 0 || fw.Margin.HorizontalSpacing != 0;
@@ -388,7 +389,7 @@ namespace Xwt.Mac
 				return customFont = FontData.FromFont (font);
 			}
 			set {
-				customFont = (FontData) value;
+				customFont = (FontData)value;
 				var widget = Widget;
 				if (widget is CustomAlignedContainer)
 					widget = ((CustomAlignedContainer)widget).Child;
@@ -399,7 +400,7 @@ namespace Xwt.Mac
 				ResetFittingSize ();
 			}
 		}
-		
+
 		public virtual Xwt.Drawing.Color BackgroundColor {
 			get {
 				return this.backgroundColor;
@@ -411,16 +412,16 @@ namespace Xwt.Mac
 				Widget.Layer.BackgroundColor = value.ToCGColor ();
 			}
 		}
-		
+
 		#region IWidgetBackend implementation
-		
+
 		public Point ConvertToScreenCoordinates (Point widgetCoordinates)
 		{
-			var lo = Widget.ConvertPointToBase (new PointF ((float)widgetCoordinates.X, (float)widgetCoordinates.Y));
-			lo = Widget.Window.ConvertBaseToScreen (lo);
-			return MacDesktopBackend.ToDesktopRect (new CGRect (lo.X, lo.Y, 0, Widget.IsFlipped ? 0 : Widget.Frame.Height)).Location;
+			var lo = Widget.ConvertPointToView (new PointF ((float)widgetCoordinates.X, (float)widgetCoordinates.Y), Widget.Window.ContentView);
+			var re = Widget.Window.ConvertRectToScreen (new CGRect (lo.X, lo.Y, 0, Widget.IsFlipped ? 0 : Widget.Frame.Height));//.ConvertBaseToScreen (lo);
+			return MacDesktopBackend.ToDesktopRect (re).Location;
 		}
-		
+
 		protected virtual Size GetNaturalSize ()
 		{
 			if (sizeCalcPending) {
@@ -437,9 +438,9 @@ namespace Xwt.Mac
 		{
 			return GetNaturalSize ();
 		}
-		
+
 		protected double minWidth = -1, minHeight = -1;
-		
+
 		public void SetMinSize (double width, double height)
 		{
 			minWidth = width;
@@ -457,7 +458,7 @@ namespace Xwt.Mac
 //			if (minWidth != -1 && Widget.Frame.Width < minWidth || minHeight != -1 && Widget.Frame.Height < minHeight)
 //				Widget.SetFrameSize (new SizeF (Math.Max (Widget.Frame.Width, (float)minWidth), Math.Max (Widget.Frame.Height, (float)minHeight)));
 		}
-		
+
 		protected virtual Size CalcFittingSize ()
 		{
 			return Size.Zero;
@@ -475,12 +476,12 @@ namespace Xwt.Mac
 					Widget.SetFrameSize (new SizeF ((float)s.Width, (float)s.Height));
 			}
 		}
-		
+
 		public void SetSizeRequest (double width, double height)
 		{
 			// Nothing to do
 		}
-		
+
 		public virtual void UpdateLayout ()
 		{
 			if (autosize)
@@ -488,16 +489,17 @@ namespace Xwt.Mac
 		}
 
 		void AutoUpdateSize ()
-		{	var s = Frontend.Surface.GetPreferredSize ();
+		{
+			var s = Frontend.Surface.GetPreferredSize ();
 			Widget.SetFrameSize (new SizeF ((float)s.Width, (float)s.Height));
 		}
 
 		NSObject gotFocusObserver;
-		
+
 		public virtual void EnableEvent (object eventId)
 		{
 			if (eventId is WidgetEvent) {
-				WidgetEvent ev = (WidgetEvent) eventId;
+				WidgetEvent ev = (WidgetEvent)eventId;
 				currentEvents |= ev;
 				switch (ev) {
 				case WidgetEvent.GotFocus:
@@ -507,15 +509,15 @@ namespace Xwt.Mac
 				}
 			}
 		}
-		
+
 		public virtual void DisableEvent (object eventId)
 		{
 			if (eventId is WidgetEvent) {
-				WidgetEvent ev = (WidgetEvent) eventId;
+				WidgetEvent ev = (WidgetEvent)eventId;
 				currentEvents &= ~ev;
 			}
 		}
-		
+
 		static Selector draggingEnteredSel = new Selector ("draggingEntered:");
 		static Selector draggingUpdatedSel = new Selector ("draggingUpdated:");
 		static Selector draggingExitedSel = new Selector ("draggingExited:");
@@ -553,7 +555,7 @@ namespace Xwt.Mac
 				}
 			}
 		}
-		
+
 		public void DragStart (DragStartData sdata)
 		{
 			var lo = Widget.ConvertPointToBase (new CGPoint (Widget.Bounds.X, Widget.Bounds.Y));
@@ -569,23 +571,23 @@ namespace Xwt.Mac
 			var pos = new CGPoint (ml.X - lo.X - (float)sdata.HotX, lo.Y - ml.Y - (float)sdata.HotY + img.Size.Height);
 			Widget.DragImage (img, pos, new SizeF (0, 0), NSApplication.SharedApplication.CurrentEvent, pb, Widget, true);
 		}
-		
+
 		public void SetDragSource (TransferDataType[] types, DragDropAction dragAction)
 		{
 		}
-		
+
 		public void SetDragTarget (TransferDataType[] types, DragDropAction dragAction)
 		{
 			SetupForDragDrop (Widget.GetType ());
 			var dtypes = types.Select (t => ToNSDragType (t)).ToArray ();
 			Widget.RegisterForDraggedTypes (dtypes);
 		}
-		
+
 		static NSDragOperation DraggingEntered (IntPtr sender, IntPtr sel, IntPtr dragInfo)
 		{
 			return DraggingUpdated (sender, sel, dragInfo);
 		}
-		
+
 		static NSDragOperation DraggingUpdated (IntPtr sender, IntPtr sel, IntPtr dragInfo)
 		{
 			IViewObject ob = Runtime.GetNSObject (sender) as IViewObject;
@@ -593,7 +595,7 @@ namespace Xwt.Mac
 				return NSDragOperation.None;
 			var backend = ob.Backend;
 			
-			NSDraggingInfo di = (NSDraggingInfo) Runtime.GetNSObject (dragInfo);
+			NSDraggingInfo di = (NSDraggingInfo)Runtime.GetNSObject (dragInfo);
 			var types = di.DraggingPasteboard.Types.Select (t => ToXwtDragType (t)).ToArray ();
 			var pos = new Point (di.DraggingLocation.X, di.DraggingLocation.Y);
 			
@@ -619,7 +621,7 @@ namespace Xwt.Mac
 			
 			return di.DraggingSourceOperationMask;
 		}
-		
+
 		static void DraggingExited (IntPtr sender, IntPtr sel, IntPtr dragInfo)
 		{
 			IViewObject ob = Runtime.GetNSObject (sender) as IViewObject;
@@ -630,7 +632,7 @@ namespace Xwt.Mac
 				});
 			}
 		}
-		
+
 		static bool PrepareForDragOperation (IntPtr sender, IntPtr sel, IntPtr dragInfo)
 		{
 			IViewObject ob = Runtime.GetNSObject (sender) as IViewObject;
@@ -639,7 +641,7 @@ namespace Xwt.Mac
 			
 			var backend = ob.Backend;
 			
-			NSDraggingInfo di = (NSDraggingInfo) Runtime.GetNSObject (dragInfo);
+			NSDraggingInfo di = (NSDraggingInfo)Runtime.GetNSObject (dragInfo);
 			var types = di.DraggingPasteboard.Types.Select (t => ToXwtDragType (t)).ToArray ();
 			var pos = new Point (di.DraggingLocation.X, di.DraggingLocation.Y);
 			
@@ -653,7 +655,7 @@ namespace Xwt.Mac
 			}
 			return true;
 		}
-		
+
 		static bool PerformDragOperation (IntPtr sender, IntPtr sel, IntPtr dragInfo)
 		{
 			IViewObject ob = Runtime.GetNSObject (sender) as IViewObject;
@@ -662,7 +664,7 @@ namespace Xwt.Mac
 			
 			var backend = ob.Backend;
 			
-			NSDraggingInfo di = (NSDraggingInfo) Runtime.GetNSObject (dragInfo);
+			NSDraggingInfo di = (NSDraggingInfo)Runtime.GetNSObject (dragInfo);
 			var pos = new Point (di.DraggingLocation.X, di.DraggingLocation.Y);
 			
 			if ((backend.currentEvents & WidgetEvent.DragDrop) != 0) {
@@ -676,26 +678,26 @@ namespace Xwt.Mac
 			} else
 				return false;
 		}
-		
+
 		static void ConcludeDragOperation (IntPtr sender, IntPtr sel, IntPtr dragInfo)
 		{
 			Console.WriteLine ("ConcludeDragOperation");
 		}
-		
+
 		protected virtual void OnDragOverCheck (NSDraggingInfo di, DragOverCheckEventArgs args)
 		{
 			ApplicationContext.InvokeUserCode (delegate {
 				eventSink.OnDragOverCheck (args);
 			});
 		}
-		
+
 		protected virtual void OnDragOver (NSDraggingInfo di, DragOverEventArgs args)
 		{
 			ApplicationContext.InvokeUserCode (delegate {
 				eventSink.OnDragOver (args);
 			});
 		}
-		
+
 		void InitPasteboard (NSPasteboard pb, TransferDataSource data)
 		{
 			pb.ClearContents ();
@@ -723,7 +725,7 @@ namespace Xwt.Mac
 				}
 			}
 		}
-		
+
 		static NSDragOperation ConvertAction (DragDropAction action)
 		{
 			NSDragOperation res = (NSDragOperation)0;
@@ -735,7 +737,7 @@ namespace Xwt.Mac
 				res |= NSDragOperation.Link;
 			return res;
 		}
-		
+
 		static DragDropAction ConvertAction (NSDragOperation action)
 		{
 			if (action == NSDragOperation.AllObsolete)
@@ -749,17 +751,22 @@ namespace Xwt.Mac
 				res |= DragDropAction.Link;
 			return res;
 		}
-		
+
 		static string ToNSDragType (TransferDataType type)
 		{
-			if (type == TransferDataType.Text) return NSPasteboard.NSStringType;
-			if (type == TransferDataType.Uri) return NSPasteboard.NSFilenamesType;
-			if (type == TransferDataType.Image) return NSPasteboard.NSPictType;
-			if (type == TransferDataType.Rtf) return NSPasteboard.NSRtfType;
-			if (type == TransferDataType.Html) return NSPasteboard.NSHtmlType;
+			if (type == TransferDataType.Text)
+				return NSPasteboard.NSStringType;
+			if (type == TransferDataType.Uri)
+				return NSPasteboard.NSFilenamesType;
+			if (type == TransferDataType.Image)
+				return NSPasteboard.NSPictType;
+			if (type == TransferDataType.Rtf)
+				return NSPasteboard.NSRtfType;
+			if (type == TransferDataType.Html)
+				return NSPasteboard.NSHtmlType;
 			return type.Id;
 		}
-		
+
 		static TransferDataType ToXwtDragType (string type)
 		{
 			if (type == NSPasteboard.NSStringType)
@@ -783,7 +790,7 @@ namespace Xwt.Mac
 				ob.Backend.ApplicationContext.InvokeUserCode (ob.Backend.EventSink.OnGotFocus);
 			return canGetIt;
 		}
-		
+
 		static bool OnResignFirstResponder (IntPtr sender, IntPtr sel)
 		{
 			IViewObject ob = Runtime.GetNSObject (sender) as IViewObject;
