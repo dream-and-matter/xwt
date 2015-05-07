@@ -57,6 +57,7 @@ namespace Xwt
 		class KnownBackend
 		{
 			public ToolkitType Type { get; set; }
+
 			public string TypeName { get; set; }
 
 			public string FullTypeName {
@@ -114,6 +115,7 @@ namespace Xwt
 		object IFrontend.Backend {
 			get { return backend; }
 		}
+
 		Toolkit IFrontend.ToolkitEngine {
 			get { return this; }
 		}
@@ -235,20 +237,19 @@ namespace Xwt
 		bool LoadBackend (string type, bool isGuest, bool throwIfFails)
 		{
 			int i = type.IndexOf (',');
-			string assembly = type.Substring (i+1).Trim ();
+			string assembly = type.Substring (i + 1).Trim ();
 			type = type.Substring (0, i).Trim ();
 			try {
 				Assembly asm = Assembly.Load (assembly);
 				if (asm != null) {
 					Type t = asm.GetType (type);
 					if (t != null) {
-						backend = (ToolkitEngineBackend) Activator.CreateInstance (t);
+						backend = (ToolkitEngineBackend)Activator.CreateInstance (t);
 						Initialize (isGuest);
 						return true;
 					}
 				}
-			}
-			catch (Exception ex) {
+			} catch (Exception ex) {
 				if (throwIfFails)
 					throw new Exception ("Toolkit could not be loaded", ex);
 				Application.NotifyException (ex);
@@ -260,7 +261,7 @@ namespace Xwt
 
 		void Initialize (bool isGuest)
 		{
-			toolkits[Backend.GetType ()] = this;
+			toolkits [Backend.GetType ()] = this;
 			backend.Initialize (this, isGuest);
 			ContextBackendHandler = Backend.CreateBackend<ContextBackendHandler> ();
 			GradientBackendHandler = Backend.CreateBackend<GradientBackendHandler> ();
@@ -350,14 +351,18 @@ namespace Xwt
 				a ();
 				ExitUserCode (null);
 				return true;
-			} catch (Exception ex) {
+			}
+			#if !DEBUG
+			catch (Exception ex) {
 				ExitUserCode (ex);
 				return false;
-			} finally {
+			} 
+			#endif
+			finally {
 				currentEngine = oldEngine;
 			}
 		}
-		
+
 		/// <summary>
 		/// Invokes an action after the user code has been processed.
 		/// </summary>
@@ -373,7 +378,7 @@ namespace Xwt
 				inUserCode = prevCount;
 			}
 		}
-		
+
 		/// <summary>
 		/// Enters the user code.
 		/// </summary>
@@ -382,7 +387,7 @@ namespace Xwt
 		{
 			inUserCode++;
 		}
-		
+
 		/// <summary>
 		/// Exits the user code.
 		/// </summary>
@@ -397,7 +402,7 @@ namespace Xwt
 			if (inUserCode == 1 && !exitCallbackRegistered) {
 				while (exitActions.Count > 0) {
 					try {
-						exitActions.Dequeue ()();
+						exitActions.Dequeue () ();
 					} catch (Exception ex) {
 						Invoke (delegate {
 							Application.NotifyException (ex);
@@ -415,7 +420,7 @@ namespace Xwt
 			EnterUserCode ();
 			ExitUserCode (null);
 		}
-		
+
 		/// <summary>
 		/// Adds the action to the exit action queue.
 		/// </summary>
@@ -435,7 +440,7 @@ namespace Xwt
 				}
 			}
 		}
-		
+
 		/// <summary>
 		/// Gets a value indicating whether the GUI Thread is currently executing user code.
 		/// </summary>
@@ -649,7 +654,7 @@ namespace Xwt
 			BackendHost.SetCustomBackend (backend);
 		}
 	}
-	
+
 	[Flags]
 	public enum ToolkitFeatures: int
 	{

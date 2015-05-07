@@ -71,7 +71,7 @@ namespace Xwt
 				return;
 			Initialize (null);
 		}
-		
+
 		/// <summary>
 		/// Initialize Xwt with the specified type.
 		/// </summary>
@@ -100,7 +100,7 @@ namespace Xwt
 
 			toolkit.EnterUserCode ();
 		}
-		
+
 		/// <summary>
 		/// Initializes Xwt as guest, embedded into an other existing toolkit.
 		/// </summary>
@@ -110,7 +110,7 @@ namespace Xwt
 			Initialize (type);
 			toolkit.ExitUserCode (null);
 		}
-		
+
 		/// <summary>
 		/// Initializes Xwt as guest, embedded into an other existing toolkit.
 		/// </summary>
@@ -133,7 +133,7 @@ namespace Xwt
 		public static void Run ()
 		{
 			if (XwtSynchronizationContext.AutoInstall)
-			if (SynchronizationContext.Current == null || 
+			if (SynchronizationContext.Current == null ||
 			    (!((engine.IsGuest) || (SynchronizationContext.Current is XwtSynchronizationContext))))
 				SynchronizationContext.SetSynchronizationContext (new XwtSynchronizationContext ());
 
@@ -141,7 +141,7 @@ namespace Xwt
 				engine.RunApplication ();
 			});
 		}
-		
+
 		/// <summary>
 		/// Exits the Xwt application.
 		/// </summary>
@@ -182,12 +182,18 @@ namespace Xwt
 					toolkit.EnterUserCode ();
 					action ();
 					toolkit.ExitUserCode (null);
-				} catch (Exception ex) {
+				} 
+				#if !DEBUG
+				catch (Exception ex) {
 					toolkit.ExitUserCode (ex);
 				}
+				#else
+				finally {
+				}
+				#endif
 			});
 		}
-		
+
 		/// <summary>
 		/// Invokes an action in the GUI thread after the provided time span
 		/// </summary>
@@ -212,7 +218,7 @@ namespace Xwt
 
 			return TimeoutInvoke (TimeSpan.FromMilliseconds (ms), action);
 		}
-		
+
 		/// <summary>
 		/// Invokes an action in the GUI thread after the provided time span
 		/// </summary>
@@ -242,9 +248,16 @@ namespace Xwt
 					toolkit.EnterUserCode ();
 					res = action ();
 					toolkit.ExitUserCode (null);
-				} catch (Exception ex) {
+				}
+				#if !DEBUG
+				catch (Exception ex) {
 					toolkit.ExitUserCode (ex);
 				}
+				#else
+				finally {
+				}
+				#endif
+
 				return res;
 			}, timeSpan);
 			return t;
@@ -265,10 +278,11 @@ namespace Xwt
 		/// <remarks>Subscribe to handle uncaught exceptions, which could
 		/// otherwise block or stop the application.</remarks>
 		public static event EventHandler<ExceptionEventArgs> UnhandledException;
-		
+
 		class Timer: IDisposable
 		{
 			public object Id;
+
 			public void Dispose ()
 			{
 				Application.engine.CancelTimerInvoke (Id);
@@ -282,12 +296,9 @@ namespace Xwt
 		internal static void NotifyException (Exception ex)
 		{
 			var unhandledException = UnhandledException;
-			if (unhandledException != null)
-			{
+			if (unhandledException != null) {
 				unhandledException (null, new ExceptionEventArgs (ex));
-			}
-			else
-			{
+			} else {
 				Console.WriteLine (ex);
 			}
 		}
